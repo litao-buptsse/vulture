@@ -1,8 +1,8 @@
 package com.sogou.vulture;
 
+import com.sogou.vulture.common.util.CommonUtils;
 import com.sogou.vulture.exec.ClusterExecutor;
 import com.sogou.vulture.exec.Executor;
-import com.sogou.vulture.exec.LocalExecutor;
 import com.sogou.vulture.model.LogDetail;
 import com.sogou.vulture.model.LogMeta;
 import org.slf4j.Logger;
@@ -58,7 +58,6 @@ public class LifecycleManager {
     return "DEAD";
   }
 
-
   class Task implements Callable<Boolean> {
     private LogMeta logMeta;
     private LogDetail logDetail;
@@ -76,7 +75,7 @@ public class LifecycleManager {
         return new ClusterExecutor();
       } else if (logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD") ||
           logMeta.getType().equals("HIVE") && targetTemperature.equals("DEAD")) {
-        return new LocalExecutor();
+        return new ClusterExecutor();
       } else {
         throw new IOException(String.format("No available executor (%s, %s)",
             logMeta.getType(), targetTemperature));
@@ -84,14 +83,25 @@ public class LifecycleManager {
     }
 
     private String getCommand() throws IOException {
-      // TODO need to implement the command args
       if (logMeta.getType().equals("HDFS") &&
           (targetTemperature.equals("WARM") || targetTemperature.equals("COLD"))) {
-        return Config.COMMAND_HDFS_COMPRESS;
+        return String.format("%s %s %s %s %s", Config.COMMAND_HDFS_COMPRESS,
+            CommonUtils.fillConfVariablePattern(
+                logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
+            CommonUtils.fillConfVariablePattern(
+                logMeta.getConf().get("filePattern").toString(), logDetail.getTime()),
+            targetTemperature, logDetail.getTime() + "-");
       } else if (logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD")) {
-        return Config.COMMAND_HDFS_CLEAN;
+        return String.format("%s %s %s", Config.COMMAND_HDFS_CLEAN,
+            CommonUtils.fillConfVariablePattern(
+                logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
+            CommonUtils.fillConfVariablePattern(
+                logMeta.getConf().get("filePattern").toString(), logDetail.getTime()));
       } else if (logMeta.getType().equals("HIVE") && targetTemperature.equals("DEAD")) {
-        return Config.COMMAND_HIVE_CLEAN;
+        return String.format("%s %s %s %s", Config.COMMAND_HIVE_CLEAN,
+            logMeta.getConf().get("database"), logMeta.getConf().get("table"),
+            CommonUtils.fillConfVariablePattern(
+                logMeta.getConf().get("partition").toString(), logDetail.getTime()));
       } else {
         throw new IOException(String.format("No available command (%s, %s)",
             logMeta.getType(), targetTemperature));
@@ -103,6 +113,7 @@ public class LifecycleManager {
       try {
         // TODO statistic before
         return getExecutor().exec(getCommand(), logDetail.getTime());
+        // TODO Update LogDetail
         // TODO statistic after
       } catch (IOException e) {
         LOG.error(String.format("Fail to run task (%s, %s)",

@@ -40,8 +40,8 @@ public class Config {
     com.typesafe.config.Config rootConf = conf.getConfig("root");
     com.typesafe.config.Config databaseConf = rootConf.getConfig("database");
     com.typesafe.config.Config schedulerConf = rootConf.getConfig("scheduler");
-    com.typesafe.config.Config executorConf = rootConf.getConfig("executor");
-    com.typesafe.config.Config clusterExecutorConf = executorConf.getConfig("cluster");
+    com.typesafe.config.Config clusterExecutorConf =
+        rootConf.getConfig("executor").getConfig("cluster");
     com.typesafe.config.Config commandConf = rootConf.getConfig("command");
 
     POOL = new JDBCConnectionPool(

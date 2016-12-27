@@ -1,5 +1,7 @@
 package com.sogou.vulture.model;
 
+import org.json.JSONObject;
+
 /**
  * Created by Tao Li on 22/12/2016.
  */
@@ -10,7 +12,7 @@ public class LogMeta {
   private long hotLivetime;
   private long warmLivetime;
   private long coldLivetime;
-  private String conf;
+  private JSONObject conf;
   private int temperatureSwitch;
 
   public LogMeta(long id, String type, String state,
@@ -22,7 +24,7 @@ public class LogMeta {
     this.hotLivetime = hotLivetime;
     this.warmLivetime = warmLivetime;
     this.coldLivetime = coldLivetime;
-    this.conf = conf;
+    this.conf = new JSONObject(conf);
     this.temperatureSwitch = temperatureSwitch;
   }
 
@@ -50,7 +52,7 @@ public class LogMeta {
     return coldLivetime;
   }
 
-  public String getConf() {
+  public JSONObject getConf() {
     return conf;
   }
 
