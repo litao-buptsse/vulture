@@ -24,9 +24,10 @@ build:
 	mvn package -Dmaven.test.skip=true
 
 docker-build: build
-	mkdir -p .tmp .tmp/conf .tmp/lib .tmp/script
+	mkdir -p .tmp .tmp/lib .tmp/bin .tmp/conf
 	cp target/$(JAR) .tmp/lib
-	cp script/* .tmp/script
+	cp -r bin/* .tmp/bin
+	cp -r conf/* .tmp/bin
 	docker build $(BUILD_PARAM) -t $(IMAGE_MAIN_NAME) .
 	docker tag -f $(IMAGE_MAIN_NAME) $(REGISTRY)/$(IMAGE)
 	rm -fr .tmp

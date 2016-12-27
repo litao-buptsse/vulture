@@ -5,4 +5,7 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-java -cp target/vulture-1.0-SNAPSHOT.jar com.sogou.vulture.LifecycleManager $1
+dir=`dirname $0`
+dir=`cd $dir/..; pwd`
+
+java -cp $dir/target/vulture-1.0-SNAPSHOT.jar:$dir/conf com.sogou.vulture.LifecycleManager $1

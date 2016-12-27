@@ -40,9 +40,9 @@ public class Config {
     com.typesafe.config.Config rootConf = conf.getConfig("root");
     com.typesafe.config.Config databaseConf = rootConf.getConfig("database");
     com.typesafe.config.Config schedulerConf = rootConf.getConfig("scheduler");
-    com.typesafe.config.Config executorConf = rootConf.getConfig("execution");
+    com.typesafe.config.Config executorConf = rootConf.getConfig("executor");
     com.typesafe.config.Config clusterExecutorConf = executorConf.getConfig("cluster");
-    com.typesafe.config.Config commandConf = executorConf.getConfig("command");
+    com.typesafe.config.Config commandConf = rootConf.getConfig("command");
 
     POOL = new JDBCConnectionPool(
         databaseConf.getString("driver"), databaseConf.getString("url"));
@@ -65,6 +65,7 @@ public class Config {
     CLOTHO_TIMEOUT = clusterExecutorConf.getString("timeout");
     CLOTHO_MAX_RUN_COUNT = clusterExecutorConf.getString("maxRunCount");
     CLOTHO_CLIENT_TIMEOUT = clusterExecutorConf.getLong("clientTimeout");
+
     COMMAND_HDFS_COMPRESS = commandConf.getString("hdfsCompress");
     COMMAND_HDFS_CLEAN = commandConf.getString("hdfsClean");
     COMMAND_HIVE_CLEAN = commandConf.getString("hiveClean");
