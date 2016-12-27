@@ -2,6 +2,7 @@ package com.sogou.vulture.dao;
 
 import com.sogou.vulture.Config;
 import com.sogou.vulture.common.db.ConnectionPoolException;
+import com.sogou.vulture.common.db.JDBCUtils;
 import com.sogou.vulture.model.LogDetail;
 
 import java.sql.Connection;
@@ -47,5 +48,12 @@ public class LogDetailDao {
       throws ConnectionPoolException, SQLException {
     return getLogDetails(String.format("WHERE logId='%s' AND transferState='SUCC'" +
         " AND state='SUCC' AND temperatureStatus!='DEAD' AND time like '%s%%'", logId, date));
+  }
+
+  // FIXME only update state and temperatureStatus
+  public void updateLogDetail(LogDetail logDetail) throws ConnectionPoolException, SQLException {
+    JDBCUtils.execute(Config.POOL, String.format(
+        "UPDATE %s SET state='%s', temperatureStatus='%s' WHERE id='%s'",
+        TABLE_NAME, logDetail.getState(), logDetail.getTemperatureStatus(), logDetail.getId()));
   }
 }

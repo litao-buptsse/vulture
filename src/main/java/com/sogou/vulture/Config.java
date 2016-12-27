@@ -1,19 +1,16 @@
 package com.sogou.vulture;
 
-import com.sogou.vulture.common.db.ConnectionPool;
 import com.sogou.vulture.common.db.ConnectionPoolException;
 import com.sogou.vulture.common.db.JDBCConnectionPool;
 import com.sogou.vulture.dao.LogDetailDao;
 import com.sogou.vulture.dao.LogMetaDao;
 import com.typesafe.config.ConfigFactory;
 
-import java.sql.Connection;
-
 /**
  * Created by Tao Li on 22/12/2016.
  */
 public class Config {
-  public static ConnectionPool<Connection> POOL;
+  public static JDBCConnectionPool POOL;
   public static LogMetaDao LOG_META_DAO;
   public static LogDetailDao LOG_DETAIL_DAO;
   public static int THREAD_NUM;

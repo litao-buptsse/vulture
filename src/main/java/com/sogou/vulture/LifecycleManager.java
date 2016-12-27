@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,8 @@ public class LifecycleManager {
       List<LogDetail> logDetails = Config.LOG_DETAIL_DAO.getAliveLogDetails(logMeta.getId(), date);
       for (LogDetail logDetail : logDetails) {
         String targetTemperature = calculateTargetTemperature(logMeta, logDetail);
+        // FIXME targetTemperature should be great than logDetail.getTemperatureStatus()
         if (!targetTemperature.equals(logDetail.getTemperatureStatus())) {
-          LOG.info("Submitting logDetail " + logDetail.getId());
           futures.put(logDetail.getId(),
               service.submit(new Task(logMeta, logDetail, targetTemperature)));
         }
@@ -53,9 +54,23 @@ public class LifecycleManager {
     service.shutdown();
   }
 
-  // TODO need to implement
   private String calculateTargetTemperature(LogMeta logMeta, LogDetail logDetail) {
-    return "DEAD";
+    LocalDateTime start = CommonUtils.getDateTimeOfTime(logDetail.getTime());
+    LocalDateTime end = LocalDateTime.now();
+
+    long hotRange = logMeta.getHotLivetime();
+    long warmRange = hotRange + logMeta.getWarmLivetime();
+    long coldRange = warmRange + logMeta.getColdLivetime();
+
+    if (end.compareTo(start.plusDays(coldRange)) > 0) {
+      return "DEAD";
+    } else if (end.compareTo(start.plusDays(warmRange)) > 0) {
+      return "COLD";
+    } else if (end.compareTo(start.plusDays(hotRange)) > 0) {
+      return "WARM";
+    } else {
+      return "HOT";
+    }
   }
 
   class Task implements Callable<Boolean> {
@@ -112,9 +127,16 @@ public class LifecycleManager {
     public Boolean call() throws Exception {
       try {
         // TODO statistic before
-        return getExecutor().exec(getCommand(), logDetail.getTime());
-        // TODO Update LogDetail
+        boolean finished = getExecutor().exec(getCommand(), logDetail.getTime());
+        if(finished) {
+          logDetail.setTemperatureStatus(targetTemperature);
+          if(logDetail.getTemperatureStatus().equals("DEAD")) {
+            logDetail.setState("DELETED");
+          }
+          Config.LOG_DETAIL_DAO.updateLogDetail(logDetail);
+        }
         // TODO statistic after
+        return finished;
       } catch (IOException e) {
         LOG.error(String.format("Fail to run task (%s, %s)",
             logDetail.getId(), targetTemperature), e);

@@ -9,6 +9,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,24 +63,32 @@ public class CommonUtils {
     return sendHttpRequest("POST", uri, headers, data, responseType);
   }
 
-  public static String fillConfVariablePattern(String confVariablePattern, String time) {
-    String timeFormat;
+  private static String getTimeFormatOfTime(String time) {
     switch (time.length()) {
       case 8:
-        timeFormat = "yyyyMMdd";
-        break;
+        return "yyyyMMdd";
       case 10:
-        timeFormat = "yyyyMMddHH";
-        break;
+        return "yyyyMMddHH";
       case 12:
-        timeFormat = "yyyyMMddHHmm";
-        break;
+        return "yyyyMMddHHmm";
       default:
         throw new IllegalArgumentException(
             "time format length must be one of yyyyMMdd, yyyyMMddHH or yyyyMMddHHmm");
     }
+  }
 
-    LocalDateTime dateTime = LocalDateTime.parse(time, DateTimeFormatter.ofPattern(timeFormat));
+  public static LocalDateTime getDateTimeOfTime(String time) {
+    String timeFormat = getTimeFormatOfTime(time);
+    DateTimeFormatter formatter = new DateTimeFormatterBuilder().appendPattern(timeFormat).
+        parseDefaulting(ChronoField.HOUR_OF_DAY, 0).
+        parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0).
+        parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0).
+        toFormatter();
+    return LocalDateTime.parse(time, formatter);
+  }
+
+  public static String fillConfVariablePattern(String confVariablePattern, String time) {
+    LocalDateTime dateTime = getDateTimeOfTime(time);
     String filled = confVariablePattern;
     while (true) {
       String timePatternVar = extractFirstConfVariable(filled);
