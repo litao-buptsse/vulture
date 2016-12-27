@@ -110,6 +110,6 @@ public class ClusterExecutor implements Executor {
   }
 
   private enum JobState {
-    WAIT, SUCC, DEAD, CANCEL
+    WAIT, LOCK, SUBMITTING, RUN, SUCC, FAIL, DEAD, CANCEL
   }
 }

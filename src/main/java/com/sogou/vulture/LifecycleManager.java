@@ -9,9 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by Tao Li on 22/12/2016.
@@ -22,14 +26,27 @@ public class LifecycleManager {
   private void run(String date) throws Exception {
     ExecutorService service = Executors.newFixedThreadPool(Config.THREAD_NUM);
 
+    Map<Long, Future<Boolean>> futures = new HashMap<>();
+
     List<LogMeta> logMetas = Config.LOG_META_DAO.getAliveLogMetas();
     for (LogMeta logMeta : logMetas) {
       List<LogDetail> logDetails = Config.LOG_DETAIL_DAO.getAliveLogDetails(logMeta.getId(), date);
       for (LogDetail logDetail : logDetails) {
         String targetTemperature = calculateTargetTemperature(logMeta, logDetail);
         if (!targetTemperature.equals(logDetail.getTemperatureStatus())) {
-          service.submit(new Task(logMeta, logDetail, targetTemperature));
+          LOG.info("Submitting logDetail " + logDetail.getId());
+          futures.put(logDetail.getId(),
+              service.submit(new Task(logMeta, logDetail, targetTemperature)));
         }
+      }
+    }
+
+    for (Map.Entry<Long, Future<Boolean>> entry : futures.entrySet()) {
+      boolean finished = entry.getValue().get();
+      if (finished) {
+        LOG.info("Succeed to run logDetail " + entry.getKey());
+      } else {
+        LOG.error("Failed to run logDetail " + entry.getKey());
       }
     }
 
@@ -42,7 +59,7 @@ public class LifecycleManager {
   }
 
 
-  class Task implements Runnable {
+  class Task implements Callable<Boolean> {
     private LogMeta logMeta;
     private LogDetail logDetail;
     private String targetTemperature;
@@ -82,14 +99,15 @@ public class LifecycleManager {
     }
 
     @Override
-    public void run() {
+    public Boolean call() throws Exception {
       try {
         // TODO statistic before
-        getExecutor().exec(getCommand(), logDetail.getTime());
+        return getExecutor().exec(getCommand(), logDetail.getTime());
         // TODO statistic after
       } catch (IOException e) {
         LOG.error(String.format("Fail to run task (%s, %s)",
             logDetail.getId(), targetTemperature), e);
+        return false;
       }
     }
   }
