@@ -8,7 +8,7 @@ fi
 dir=`dirname $0`
 dir=`cd $dir; pwd`
 
-type="Hive"
+type="HIVE"
 db=$1
 table=$2
 partitionValStrs=$3
