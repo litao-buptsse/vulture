@@ -27,7 +27,7 @@ docker-build: build
 	mkdir -p .tmp .tmp/lib .tmp/bin .tmp/conf
 	cp target/$(JAR) .tmp/lib
 	cp -r bin/* .tmp/bin
-	cp -r conf/* .tmp/bin
+	cp -r conf/* .tmp/conf
 	docker build $(BUILD_PARAM) -t $(IMAGE_MAIN_NAME) .
 	docker tag -f $(IMAGE_MAIN_NAME) $(REGISTRY)/$(IMAGE)
 	rm -fr .tmp
