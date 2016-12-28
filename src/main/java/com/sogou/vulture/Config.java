@@ -21,7 +21,8 @@ public class Config {
   public static String CLOTHO_IMAGE;
   public static String CLOTHO_VERSION;
   public static String CLOTHO_MEMORY;
-  public static String CLOTHO_CLUSTER_UGI;
+  public static String CLOTHO_HDFS_UGI;
+  public static String CLOTHO_HIVE_UGI;
   public static String CLOTHO_EMAILS;
   public static String CLOTHO_NOTICE_TYPE;
   public static String CLOTHO_NAME;
@@ -55,7 +56,8 @@ public class Config {
     CLOTHO_IMAGE = clusterExecutorConf.getString("image");
     CLOTHO_VERSION = clusterExecutorConf.getString("version");
     CLOTHO_MEMORY = clusterExecutorConf.getString("memory");
-    CLOTHO_CLUSTER_UGI = clusterExecutorConf.getString("clusterUgi");
+    CLOTHO_HDFS_UGI = clusterExecutorConf.getString("hdfsUgi");
+    CLOTHO_HIVE_UGI = clusterExecutorConf.getString("hiveUgi");
     CLOTHO_EMAILS = clusterExecutorConf.getString("emails");
     CLOTHO_NOTICE_TYPE = clusterExecutorConf.getString("noticeType");
     CLOTHO_NAME = clusterExecutorConf.getString("name");

@@ -48,7 +48,7 @@ public class LocalExecutor implements Executor {
   }
 
   @Override
-  public boolean exec(String command, String time) throws IOException {
+  public boolean exec(String command, String time, String hadoopUgi) throws IOException {
     String realCommand = String.format("%s %s", command, time);
     return runProcess(realCommand, null, null) == 0;
   }

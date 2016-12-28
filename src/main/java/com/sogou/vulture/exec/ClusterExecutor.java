@@ -24,7 +24,7 @@ public class ClusterExecutor implements Executor {
     HEADERS.put("token", Config.CLOTHO_TOKEN);
   }
 
-  private static long submitJob(String command, String time) throws IOException {
+  private static long submitJob(String command, String time, String hadoopUgi) throws IOException {
     Map<String, String> data = new HashMap<>();
 
     data.put("taskid", Config.CLOTHO_TASK_ID);
@@ -32,7 +32,7 @@ public class ClusterExecutor implements Executor {
     data.put("image", Config.CLOTHO_IMAGE);
     data.put("version", Config.CLOTHO_VERSION);
     data.put("memory", Config.CLOTHO_MEMORY);
-    data.put("clusterUgi", Config.CLOTHO_CLUSTER_UGI);
+    data.put("clusterUgi", hadoopUgi);
     data.put("state", JobState.WAIT.name());
     data.put("emails", Config.CLOTHO_EMAILS);
     data.put("noticeType", Config.CLOTHO_NOTICE_TYPE);
@@ -104,8 +104,8 @@ public class ClusterExecutor implements Executor {
   }
 
   @Override
-  public boolean exec(String command, String time) throws IOException {
-    long jobId = submitJob(command, time);
+  public boolean exec(String command, String time, String hadoopUgi) throws IOException {
+    long jobId = submitJob(command, time, hadoopUgi);
     return waitForJobCompletion(jobId);
   }
 

@@ -123,14 +123,25 @@ public class LifecycleManager {
       }
     }
 
+    public String getHadoopUgi() throws IOException {
+      switch (logMeta.getType()) {
+        case "HDFS":
+          return Config.CLOTHO_HDFS_UGI;
+        case "HIVE":
+          return Config.CLOTHO_HIVE_UGI;
+        default:
+          throw new IOException(String.format("No available hadoopUgi (%s)", logMeta.getType()));
+      }
+    }
+
     @Override
     public Boolean call() throws Exception {
       try {
         // TODO statistic before
-        boolean finished = getExecutor().exec(getCommand(), logDetail.getTime());
-        if(finished) {
+        boolean finished = getExecutor().exec(getCommand(), logDetail.getTime(), getHadoopUgi());
+        if (finished) {
           logDetail.setTemperatureStatus(targetTemperature);
-          if(logDetail.getTemperatureStatus().equals("DEAD")) {
+          if (logDetail.getTemperatureStatus().equals("DEAD")) {
             logDetail.setState("DELETED");
           }
           Config.LOG_DETAIL_DAO.updateLogDetail(logDetail);
