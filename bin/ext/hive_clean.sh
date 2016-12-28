@@ -14,6 +14,10 @@ table=$2
 partitionValStrs=$3
 trashRootDir='/user/hive/tmp/hive_clean_trash'
 
-hadoop jar $dir/hadoop-extras-1.0-SNAPSHOT.jar \
+hadoopClasspath=`hadoop classpath`
+hiveClasspath=/opt/datadir/conf:/opt/datadir/lib/*:/opt/datadir/auxlib/*
+classpath=$dir/hadoop-extras-1.0-SNAPSHOT.jar:$hiveClasspath:$hadoopClasspath
+
+java -cp $classpath \
   com.sogou.hadoop.extras.tools.clean.Clean \
   $type $db $table $partitionValStrs $trashRootDir
