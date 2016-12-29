@@ -1,4 +1,4 @@
-package com.sogou.vulture.exec;
+package com.sogou.vulture.common.exec;
 
 import com.sogou.vulture.Config;
 import com.sogou.vulture.common.util.CommonUtils;

@@ -1,4 +1,4 @@
-package com.sogou.vulture.exec;
+package com.sogou.vulture.common.exec;
 
 /**
  * Created by Tao Li on 2016/6/28.

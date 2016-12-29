@@ -2,7 +2,7 @@ package com.sogou.vulture;
 
 import com.sogou.vulture.common.db.ConnectionPoolException;
 import com.sogou.vulture.common.util.CommonUtils;
-import com.sogou.vulture.exec.*;
+import com.sogou.vulture.common.exec.*;
 import com.sogou.vulture.model.LogDetail;
 import com.sogou.vulture.model.LogMeta;
 import com.sogou.vulture.model.LogStatisticsDetail;

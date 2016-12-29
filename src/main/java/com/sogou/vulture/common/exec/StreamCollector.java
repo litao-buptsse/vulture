@@ -1,4 +1,4 @@
-package com.sogou.vulture.exec;
+package com.sogou.vulture.common.exec;
 
 import java.io.BufferedReader;
 import java.io.IOException;
