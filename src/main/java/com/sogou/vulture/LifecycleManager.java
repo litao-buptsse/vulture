@@ -86,9 +86,8 @@ public class LifecycleManager {
 
     private Executor getExecutor() throws IOException {
       if (logMeta.getType().equals("HDFS") &&
-          (targetTemperature.equals("WARM") || targetTemperature.equals("COLD"))) {
-        return new ClusterExecutor();
-      } else if (logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD") ||
+          (targetTemperature.equals("WARM") || targetTemperature.equals("COLD")) ||
+          logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD") ||
           logMeta.getType().equals("HIVE") && targetTemperature.equals("DEAD")) {
         return new ClusterExecutor();
       } else {
@@ -123,7 +122,7 @@ public class LifecycleManager {
       }
     }
 
-    public String getHadoopUgi() throws IOException {
+    private String getHadoopUgi() throws IOException {
       switch (logMeta.getType()) {
         case "HDFS":
           return Config.CLOTHO_HDFS_UGI;
@@ -134,10 +133,20 @@ public class LifecycleManager {
       }
     }
 
+    // TODO need to implement
+    private void beforeExec() {
+
+    }
+
+    // TODO need to implement
+    private void afterExec(boolean finished) {
+
+    }
+
     @Override
     public Boolean call() throws Exception {
       try {
-        // TODO statistic before
+        beforeExec();
         boolean finished = getExecutor().exec(getCommand(), logDetail.getTime(), getHadoopUgi());
         if (finished) {
           logDetail.setTemperatureStatus(targetTemperature);
@@ -146,7 +155,7 @@ public class LifecycleManager {
           }
           Config.LOG_DETAIL_DAO.updateLogDetail(logDetail);
         }
-        // TODO statistic after
+        afterExec(finished);
         return finished;
       } catch (IOException e) {
         LOG.error(String.format("Fail to run task (%s, %s)",
