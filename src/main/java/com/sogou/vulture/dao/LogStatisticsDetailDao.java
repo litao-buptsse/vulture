@@ -83,7 +83,7 @@ public class LogStatisticsDetailDao {
     JDBCUtils.execute(Config.POOL, String.format(
         "UPDATE %s SET temperature='%s', size='%s', num='%s', targetTemperature='%s', " +
             "targetSize='%s', targetNum='%s', `state`='%s'" +
-            "WHERE logId='%s', `time`='%s'", TABLE_NAME,
+            "WHERE logId='%s' AND `time`='%s'", TABLE_NAME,
         logStatisticsDetail.getTemperature(), logStatisticsDetail.getSize(),
         logStatisticsDetail.getNum(), logStatisticsDetail.getTargetTemperature(),
         logStatisticsDetail.getTargetSize(), logStatisticsDetail.getTargetNum(),
