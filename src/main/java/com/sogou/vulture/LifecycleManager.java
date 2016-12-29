@@ -163,7 +163,7 @@ public class LifecycleManager {
           break;
         case "HIVE":
           command = String.format("%s %s %s %s",
-              Config.COMMAND_HDFS_STATISTICS,
+              Config.COMMAND_HIVE_STATISTICS,
               logMeta.getConf().get("database"), logMeta.getConf().get("table"),
               CommonUtils.fillConfVariablePattern(
                   logMeta.getConf().get("partition").toString(), logDetail.getTime()));
