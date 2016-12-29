@@ -18,7 +18,7 @@ import java.util.List;
 public class LogDetailDao {
   private final static String TABLE_NAME = "LogDetail";
 
-  public List<LogDetail> getLogDetails(String whereClause)
+  private List<LogDetail> getLogDetails(String whereClause)
       throws ConnectionPoolException, SQLException {
     String sql = String.format("SELECT * FROM %s %s", TABLE_NAME, whereClause);
     Connection conn = Config.POOL.getConnection();

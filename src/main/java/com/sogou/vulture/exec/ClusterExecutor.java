@@ -104,9 +104,14 @@ public class ClusterExecutor implements Executor {
   }
 
   @Override
-  public boolean exec(String command, String time, String hadoopUgi) throws IOException {
+  public boolean exec(String command, String time, String hadoopUgi,
+                      StreamProcessor stdout, StreamProcessor stderr) throws IOException {
     long jobId = submitJob(command, time, hadoopUgi);
     return waitForJobCompletion(jobId);
+  }
+
+  public boolean exec(String command, String time, String hadoopUgi) throws IOException {
+    return exec(command, time, hadoopUgi, null, null);
   }
 
   private enum JobState {

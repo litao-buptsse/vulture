@@ -1,14 +1,16 @@
 package com.sogou.vulture;
 
+import com.sogou.vulture.common.db.ConnectionPoolException;
 import com.sogou.vulture.common.util.CommonUtils;
-import com.sogou.vulture.exec.ClusterExecutor;
-import com.sogou.vulture.exec.Executor;
+import com.sogou.vulture.exec.*;
 import com.sogou.vulture.model.LogDetail;
 import com.sogou.vulture.model.LogMeta;
+import com.sogou.vulture.model.LogStatisticsDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -73,93 +75,170 @@ public class LifecycleManager {
     }
   }
 
-  class Task implements Callable<Boolean> {
+  static class Task implements Callable<Boolean> {
     private LogMeta logMeta;
     private LogDetail logDetail;
     private String targetTemperature;
+    private TaskType taskType = TaskType.INVALID;
+    private LogStatisticsDetail logStatisticsDetail;
+
+    enum TaskType {
+      HDFS_COMPRESS_WARM, HDFS_COMPRESS_COLD, HDFS_CLEAN, HIVE_CLEAN, INVALID
+    }
 
     public Task(LogMeta logMeta, LogDetail logDetail, String targetTemperature) {
       this.logMeta = logMeta;
       this.logDetail = logDetail;
       this.targetTemperature = targetTemperature;
+
+      if (logMeta.getType().equals("HDFS")) {
+        if (targetTemperature.equals("WARM")) {
+          taskType = TaskType.HDFS_COMPRESS_WARM;
+        } else if (targetTemperature.equals("COLD")) {
+          taskType = TaskType.HDFS_COMPRESS_COLD;
+        } else if (targetTemperature.equals("DEAD")) {
+          taskType = TaskType.HDFS_CLEAN;
+        }
+      } else if (logMeta.getType().equals("HIVE")) {
+        if (targetTemperature.equals("DEAD")) {
+          taskType = TaskType.HIVE_CLEAN;
+        }
+      }
+
+      logStatisticsDetail = new LogStatisticsDetail(
+          logDetail.getTime().substring(0, 8),
+          logDetail.getLogId(), logDetail.getTime(),
+          logDetail.getTemperatureStatus(), 0, 0,
+          targetTemperature, 0, 0, "INIT"
+      );
     }
 
-    private Executor getExecutor() throws IOException {
-      if (logMeta.getType().equals("HDFS") &&
-          (targetTemperature.equals("WARM") || targetTemperature.equals("COLD")) ||
-          logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD") ||
-          logMeta.getType().equals("HIVE") && targetTemperature.equals("DEAD")) {
-        return new ClusterExecutor();
-      } else {
-        throw new IOException(String.format("No available executor (%s, %s)",
-            logMeta.getType(), targetTemperature));
+    private String getCommand() {
+      switch (taskType) {
+        case HDFS_COMPRESS_WARM:
+        case HDFS_COMPRESS_COLD:
+          return String.format("%s %s %s %s %s", Config.COMMAND_HDFS_COMPRESS,
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("filePattern").toString(), logDetail.getTime()),
+              targetTemperature, logDetail.getTime() + "-");
+        case HDFS_CLEAN:
+          return String.format("%s %s %s", Config.COMMAND_HDFS_CLEAN,
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("filePattern").toString(), logDetail.getTime()));
+        case HIVE_CLEAN:
+          return String.format("%s %s %s %s", Config.COMMAND_HIVE_CLEAN,
+              logMeta.getConf().get("database"), logMeta.getConf().get("table"),
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("partition").toString(), logDetail.getTime()));
+        default:
+          return null;
       }
     }
 
-    private String getCommand() throws IOException {
-      if (logMeta.getType().equals("HDFS") &&
-          (targetTemperature.equals("WARM") || targetTemperature.equals("COLD"))) {
-        return String.format("%s %s %s %s %s", Config.COMMAND_HDFS_COMPRESS,
-            CommonUtils.fillConfVariablePattern(
-                logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
-            CommonUtils.fillConfVariablePattern(
-                logMeta.getConf().get("filePattern").toString(), logDetail.getTime()),
-            targetTemperature, logDetail.getTime() + "-");
-      } else if (logMeta.getType().equals("HDFS") && targetTemperature.equals("DEAD")) {
-        return String.format("%s %s %s", Config.COMMAND_HDFS_CLEAN,
-            CommonUtils.fillConfVariablePattern(
-                logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
-            CommonUtils.fillConfVariablePattern(
-                logMeta.getConf().get("filePattern").toString(), logDetail.getTime()));
-      } else if (logMeta.getType().equals("HIVE") && targetTemperature.equals("DEAD")) {
-        return String.format("%s %s %s %s", Config.COMMAND_HIVE_CLEAN,
-            logMeta.getConf().get("database"), logMeta.getConf().get("table"),
-            CommonUtils.fillConfVariablePattern(
-                logMeta.getConf().get("partition").toString(), logDetail.getTime()));
-      } else {
-        throw new IOException(String.format("No available command (%s, %s)",
-            logMeta.getType(), targetTemperature));
-      }
-    }
-
-    private String getHadoopUgi() throws IOException {
+    private String getHadoopUgi() {
       switch (logMeta.getType()) {
         case "HDFS":
           return Config.CLOTHO_HDFS_UGI;
         case "HIVE":
           return Config.CLOTHO_HIVE_UGI;
         default:
-          throw new IOException(String.format("No available hadoopUgi (%s)", logMeta.getType()));
+          return null;
       }
     }
 
-    // TODO need to implement
-    private void beforeExec() {
+    private long[] statistics() throws IOException {
+      String command = null;
+      switch (logMeta.getType()) {
+        case "HDFS":
+          command = String.format("%s %s %s",
+              Config.COMMAND_HDFS_STATISTICS,
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("pathPattern").toString(), logDetail.getTime()),
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("filePattern").toString(), logDetail.getTime()));
+          break;
+        case "HIVE":
+          command = String.format("%s %s %s %s",
+              Config.COMMAND_HDFS_STATISTICS,
+              logMeta.getConf().get("database"), logMeta.getConf().get("table"),
+              CommonUtils.fillConfVariablePattern(
+                  logMeta.getConf().get("partition").toString(), logDetail.getTime()));
+          break;
+      }
 
+      StreamCollector stdout = new StreamCollector();
+      boolean finished = new LocalExecutor().exec(
+          command, logDetail.getTime(), getHadoopUgi(), stdout, null);
+      if (finished) {
+        String[] output = stdout.getOutput().get(0).split(",");
+        long size = Long.parseLong(output[0]);
+        long num = Long.parseLong(output[1]);
+        return new long[]{size, num};
+      }
+
+      throw new IOException("Fail to statistics " + logDetail.getId());
     }
 
-    // TODO need to implement
-    private void afterExec(boolean finished) {
+    private void beforeExec() throws IOException, ConnectionPoolException, SQLException {
+      long[] info = statistics();
+      long size = info[0];
+      long num = info[1];
 
+      logStatisticsDetail.setSize(size);
+      logStatisticsDetail.setNum(num);
+      logStatisticsDetail.setTargetSize(size);
+      logStatisticsDetail.setTargetNum(num);
+      logStatisticsDetail.setState("INIT");
+
+      Config.LOG_STATISTICS_DETAIL_DAO.createLogStatisticsDetail(logStatisticsDetail);
+    }
+
+    private void afterExec(boolean finished) throws IOException, ConnectionPoolException, SQLException {
+      if (finished) {
+        // Update LogDetail state and targetTemperature
+        logDetail.setTemperatureStatus(targetTemperature);
+        if (logDetail.getTemperatureStatus().equals("DEAD")) {
+          logDetail.setState("DELETED");
+        }
+        Config.LOG_DETAIL_DAO.updateLogDetail(logDetail);
+
+        // Statistics
+        long size = 0;
+        long num = 0;
+        if (taskType == TaskType.HDFS_COMPRESS_WARM || taskType == TaskType.HDFS_COMPRESS_COLD) {
+          long[] info = statistics();
+          size = info[0];
+          num = info[1];
+        }
+
+        logStatisticsDetail.setTargetSize(size);
+        logStatisticsDetail.setTargetNum(num);
+        logStatisticsDetail.setState("SUCC");
+      } else {
+        logStatisticsDetail.setState("FAIL");
+      }
+
+      Config.LOG_STATISTICS_DETAIL_DAO.updateLogStatisticsDetail(logStatisticsDetail);
     }
 
     @Override
     public Boolean call() throws Exception {
+      if (taskType == TaskType.INVALID) {
+        throw new Exception("Invalid task type " + logDetail.getId());
+      }
+
       try {
         beforeExec();
-        boolean finished = getExecutor().exec(getCommand(), logDetail.getTime(), getHadoopUgi());
-        if (finished) {
-          logDetail.setTemperatureStatus(targetTemperature);
-          if (logDetail.getTemperatureStatus().equals("DEAD")) {
-            logDetail.setState("DELETED");
-          }
-          Config.LOG_DETAIL_DAO.updateLogDetail(logDetail);
-        }
+        boolean finished = new ClusterExecutor().
+            exec(getCommand(), logDetail.getTime(), getHadoopUgi());
         afterExec(finished);
         return finished;
-      } catch (IOException e) {
-        LOG.error(String.format("Fail to run task (%s, %s)",
-            logDetail.getId(), targetTemperature), e);
+      } catch (Exception e) {
+        LOG.error("Fail to run task " + logDetail.getId(), e);
         return false;
       }
     }

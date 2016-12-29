@@ -17,7 +17,7 @@ import java.util.List;
 public class LogMetaDao {
   private final static String TABLE_NAME = "LogMeta";
 
-  public List<LogMeta> getLogMetas(String whereClause)
+  private List<LogMeta> getLogMetas(String whereClause)
       throws ConnectionPoolException, SQLException {
     String sql = String.format("SELECT * FROM %s %s", TABLE_NAME, whereClause);
     Connection conn = Config.POOL.getConnection();

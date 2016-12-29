@@ -4,6 +4,7 @@ import com.sogou.vulture.common.db.ConnectionPoolException;
 import com.sogou.vulture.common.db.JDBCConnectionPool;
 import com.sogou.vulture.dao.LogDetailDao;
 import com.sogou.vulture.dao.LogMetaDao;
+import com.sogou.vulture.dao.LogStatisticsDetailDao;
 import com.typesafe.config.ConfigFactory;
 
 /**
@@ -13,6 +14,7 @@ public class Config {
   public static JDBCConnectionPool POOL;
   public static LogMetaDao LOG_META_DAO;
   public static LogDetailDao LOG_DETAIL_DAO;
+  public static LogStatisticsDetailDao LOG_STATISTICS_DETAIL_DAO;
   public static int THREAD_NUM;
   public static String CLOTHO_ROOT_API;
   public static String CLOTHO_TOKEN;
@@ -32,6 +34,8 @@ public class Config {
   public static String COMMAND_HDFS_COMPRESS;
   public static String COMMAND_HDFS_CLEAN;
   public static String COMMAND_HIVE_CLEAN;
+  public static String COMMAND_HDFS_STATISTICS;
+  public static String COMMAND_HIVE_STATISTICS;
 
   public static void init() throws ConnectionPoolException {
     com.typesafe.config.Config conf = ConfigFactory.load();
@@ -46,6 +50,7 @@ public class Config {
         databaseConf.getString("driver"), databaseConf.getString("url"));
     LOG_META_DAO = new LogMetaDao();
     LOG_DETAIL_DAO = new LogDetailDao();
+    LOG_STATISTICS_DETAIL_DAO = new LogStatisticsDetailDao();
 
     THREAD_NUM = schedulerConf.getInt("threadNum");
 
@@ -68,5 +73,7 @@ public class Config {
     COMMAND_HDFS_COMPRESS = commandConf.getString("hdfsCompress");
     COMMAND_HDFS_CLEAN = commandConf.getString("hdfsClean");
     COMMAND_HIVE_CLEAN = commandConf.getString("hiveClean");
+    COMMAND_HDFS_STATISTICS = commandConf.getString("hdfsStatistics");
+    COMMAND_HIVE_STATISTICS = commandConf.getString("hiveStatistics");
   }
 }
