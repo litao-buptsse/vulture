@@ -29,6 +29,7 @@ public class LogStatisticsDetailDao {
           while (rs.next()) {
             logStatisticsDetails.add(new LogStatisticsDetail(
                 rs.getString("date"),
+                rs.getString("type"),
                 rs.getLong("logId"),
                 rs.getString("time"),
                 rs.getString("temperature"),
@@ -68,27 +69,28 @@ public class LogStatisticsDetailDao {
   public void createLogStatisticsDetail(LogStatisticsDetail logStatisticsDetail)
       throws ConnectionPoolException, SQLException {
     JDBCUtils.execute(Config.POOL, String.format(
-        "INSERT INTO %s (`date`, logId, `time`, temperature, size, num, targetTemperature, " +
+        "INSERT INTO %s (`date`, `type`, logId, `time`, temperature, size, num, targetTemperature, " +
             "targetSize, targetNum, `state`) " +
             "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", TABLE_NAME,
-        logStatisticsDetail.getDate(), logStatisticsDetail.getLogId(),
-        logStatisticsDetail.getTime(), logStatisticsDetail.getTemperature(),
-        logStatisticsDetail.getSize(), logStatisticsDetail.getNum(),
-        logStatisticsDetail.getTargetTemperature(), logStatisticsDetail.getTargetSize(),
-        logStatisticsDetail.getTargetNum(), logStatisticsDetail.getState()));
+        logStatisticsDetail.getDate(), logStatisticsDetail.getType(),
+        logStatisticsDetail.getLogId(), logStatisticsDetail.getTime(),
+        logStatisticsDetail.getTemperature(), logStatisticsDetail.getSize(),
+        logStatisticsDetail.getNum(), logStatisticsDetail.getTargetTemperature(),
+        logStatisticsDetail.getTargetSize(), logStatisticsDetail.getTargetNum(),
+        logStatisticsDetail.getState()));
   }
 
   public void updateLogStatisticsDetail(LogStatisticsDetail logStatisticsDetail)
       throws ConnectionPoolException, SQLException {
     JDBCUtils.execute(Config.POOL, String.format(
-        "UPDATE %s SET temperature='%s', size='%s', num='%s', targetTemperature='%s', " +
-            "targetSize='%s', targetNum='%s', `state`='%s'" +
+        "UPDATE %s SET `type`='%s', temperature='%s', size='%s', num='%s', " +
+            "targetTemperature='%s', targetSize='%s', targetNum='%s', `state`='%s'" +
             "WHERE logId='%s' AND `time`='%s'", TABLE_NAME,
-        logStatisticsDetail.getTemperature(), logStatisticsDetail.getSize(),
-        logStatisticsDetail.getNum(), logStatisticsDetail.getTargetTemperature(),
-        logStatisticsDetail.getTargetSize(), logStatisticsDetail.getTargetNum(),
-        logStatisticsDetail.getState(), logStatisticsDetail.getLogId(),
-        logStatisticsDetail.getTime()));
+        logStatisticsDetail.getType(), logStatisticsDetail.getTemperature(),
+        logStatisticsDetail.getSize(), logStatisticsDetail.getNum(),
+        logStatisticsDetail.getTargetTemperature(), logStatisticsDetail.getTargetSize(),
+        logStatisticsDetail.getTargetNum(), logStatisticsDetail.getState(),
+        logStatisticsDetail.getLogId(), logStatisticsDetail.getTime()));
   }
 
   public void createOrUpdateLogStatisticsDetail(LogStatisticsDetail logStatisticsDetail)

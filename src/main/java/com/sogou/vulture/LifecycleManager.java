@@ -1,8 +1,10 @@
 package com.sogou.vulture;
 
 import com.sogou.vulture.common.db.ConnectionPoolException;
+import com.sogou.vulture.common.exec.ClusterExecutor;
+import com.sogou.vulture.common.exec.LocalExecutor;
+import com.sogou.vulture.common.exec.StreamCollector;
 import com.sogou.vulture.common.util.CommonUtils;
-import com.sogou.vulture.common.exec.*;
 import com.sogou.vulture.model.LogDetail;
 import com.sogou.vulture.model.LogMeta;
 import com.sogou.vulture.model.LogStatisticsDetail;
@@ -106,7 +108,7 @@ public class LifecycleManager {
       }
 
       logStatisticsDetail = new LogStatisticsDetail(
-          logDetail.getTime().substring(0, 8),
+          logDetail.getTime().substring(0, 8), logMeta.getType(),
           logDetail.getLogId(), logDetail.getTime(),
           logDetail.getTemperatureStatus(), 0, 0,
           targetTemperature, 0, 0, "INIT"
@@ -194,7 +196,7 @@ public class LifecycleManager {
       logStatisticsDetail.setTargetNum(num);
       logStatisticsDetail.setState("INIT");
 
-      Config.LOG_STATISTICS_DETAIL_DAO.createLogStatisticsDetail(logStatisticsDetail);
+      Config.LOG_STATISTICS_DETAIL_DAO.createOrUpdateLogStatisticsDetail(logStatisticsDetail);
     }
 
     private void afterExec(boolean finished) throws IOException, ConnectionPoolException, SQLException {
@@ -258,5 +260,9 @@ public class LifecycleManager {
     } finally {
       Config.POOL.close();
     }
+
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      // TODO kill all runnning tasks
+    }));
   }
 }

@@ -5,6 +5,7 @@ package com.sogou.vulture.model;
  */
 public class LogStatisticsDetail {
   private String date;
+  private String type;
   private long logId;
   private String time;
   private String temperature;
@@ -15,10 +16,11 @@ public class LogStatisticsDetail {
   private long targetNum;
   private String state;
 
-  public LogStatisticsDetail(String date, long logId, String time, String temperature,
+  public LogStatisticsDetail(String date, String type, long logId, String time, String temperature,
                              long size, long num, String targetTemperature, long targetSize,
                              long targetNum, String state) {
     this.date = date;
+    this.type = type;
     this.logId = logId;
     this.time = time;
     this.temperature = temperature;
@@ -36,6 +38,14 @@ public class LogStatisticsDetail {
 
   public void setDate(String date) {
     this.date = date;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
   }
 
   public long getLogId() {
