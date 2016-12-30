@@ -102,7 +102,7 @@ public class CommonUtils {
   }
 
   private static String extractFirstConfVariable(String rowConfVariable) {
-    String confVariableRegex = "\\$\\{(\\w+)\\}";
+    String confVariableRegex = "\\$\\{([\\w-]+)\\}";
     Pattern p = Pattern.compile(confVariableRegex);
     Matcher m = p.matcher(rowConfVariable);
     while (m.find()) {
