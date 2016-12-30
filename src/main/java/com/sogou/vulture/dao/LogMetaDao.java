@@ -46,6 +46,7 @@ public class LogMetaDao {
   }
 
   public List<LogMeta> getAliveLogMetas() throws ConnectionPoolException, SQLException {
-    return getLogMetas("WHERE state='RUN' AND temperatureSwitch='1'");
+    // TODO only select sunshine logMetas
+    return getLogMetas("WHERE state='RUN' AND temperatureSwitch='1' AND clusterId='3'");
   }
 }
