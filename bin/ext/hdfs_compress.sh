@@ -17,6 +17,17 @@ tmpPath='/logdata/tmp/hdfs_compress_tmp'
 trashPath='/logdata/tmp/hdfs_compress_trash'
 ymd=`date +%Y%m%d`
 
+if [[ $inputPath == /logdata* ]]; then
+  tmpPath='/logdata/tmp/hdfs_compress_tmp'
+  trashPath='/logdata/tmp/hdfs_compress_trash'
+elif [[ $inputPath == /storage* ]]; then
+  tmpPath='/storage/tmp/hdfs_compress_tmp'
+  trashPath='/storage/tmp/hdfs_compress_trash'
+elif [[ $inputPath == /cloud* ]]; then
+  tmpPath='/cloud/tmp/hdfs_compress_tmp'
+  trashPath='/cloud/tmp/hdfs_compress_trash'
+fi
+
 hadoop jar $dir/hadoop-extras-1.0-SNAPSHOT.jar \
   com.sogou.hadoop.extras.tools.hdfs.compress.DistributedHdfsCompression \
   -DfilePrefix=$filePrefix -DoutputPath=$outputPath -DtmpPath=$tmpPath -DtrashPath=$trashPath \
