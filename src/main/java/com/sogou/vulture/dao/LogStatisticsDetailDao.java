@@ -69,9 +69,9 @@ public class LogStatisticsDetailDao {
   public void createLogStatisticsDetail(LogStatisticsDetail logStatisticsDetail)
       throws ConnectionPoolException, SQLException {
     JDBCUtils.execute(Config.POOL, String.format(
-        "INSERT INTO %s (`date`, `type`, logId, `time`, temperature, size, num, targetTemperature, " +
-            "targetSize, targetNum, `state`) " +
-            "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", TABLE_NAME,
+        "INSERT INTO %s (`date`, `type`, logId, `time`, temperature, size, num, " +
+            "targetTemperature, targetSize, targetNum, `state`) " +
+            "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", TABLE_NAME,
         logStatisticsDetail.getDate(), logStatisticsDetail.getType(),
         logStatisticsDetail.getLogId(), logStatisticsDetail.getTime(),
         logStatisticsDetail.getTemperature(), logStatisticsDetail.getSize(),
