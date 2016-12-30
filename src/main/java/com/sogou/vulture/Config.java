@@ -48,6 +48,14 @@ public class Config {
 
     POOL = new JDBCConnectionPool(
         databaseConf.getString("driver"), databaseConf.getString("url"));
+    POOL.setInitConnectionNum(databaseConf.getInt("initConnectionNum"));
+    POOL.setMinConnectionNum(databaseConf.getInt("minConnectionNum"));
+    POOL.setMaxConnectionNum(databaseConf.getInt("maxConnectionNum"));
+    POOL.setIdleTimeout(databaseConf.getLong("idleTimeout"));
+    POOL.setIdleQueueSize(databaseConf.getInt("idleQueueSize"));
+    POOL.setIdleConnectionCloseThreadPoolSize(
+        databaseConf.getInt("idleConnectionCloseThreadPoolSize"));
+
     LOG_META_DAO = new LogMetaDao();
     LOG_DETAIL_DAO = new LogDetailDao();
     LOG_STATISTICS_DETAIL_DAO = new LogStatisticsDetailDao();

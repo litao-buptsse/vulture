@@ -234,6 +234,7 @@ public class LifecycleManager {
       }
 
       try {
+        LOG.info("Start to run task " + logDetail.getId());
         beforeExec();
         boolean finished = new ClusterExecutor().
             exec(getCommand(), logDetail.getTime(), getHadoopUgi());
